@@ -47,7 +47,7 @@ graph TD
 - **`pkg/clob/ws`**: Robust WebSocket client with auto-reconnect and typed event channels.
 - **`pkg/auth`**: Cryptographic primitives for EIP-712 signing and HMAC generation.
 - **`pkg/transport`**: HTTP transport layer handling signing injection, retries, and error parsing.
-- **`pkg/execution`**: Unified execution contract (`Place`/`Cancel`/`Query`/`Replay`), CLOB adapter, normalized lifecycle model (`created`/`accepted`/`partial`/`filled`/`canceled`/`rejected`), deterministic idempotency-key spec (`tenant + strategy + client_order_id`), retry policy standard (network/timeout/HTTP 5xx), and WS reconnect/heartbeat policy helpers.
+- **`pkg/execution`**: Unified execution contract (`Place`/`Cancel`/`Query`/`Replay`), CLOB adapter, normalized lifecycle model (`created`/`accepted`/`partial`/`filled`/`canceled`/`rejected`), deterministic idempotency-key spec (`tenant + strategy + client_order_id`), retry policy standard (network/timeout/HTTP 5xx), WS reconnect/heartbeat policy helpers, and attribution pass-through fields (`builder`/`funder`/`source`).
 - **WS schema compatibility tests**: Added explicit compatibility tests for alias fields (`event_type`/`type`, `bids/asks` + `buys/sells`, `assets_ids` + `asset_ids`) to detect breaking message-shape drifts early.
 
 ## 🚀 Installation

@@ -76,7 +76,14 @@ func TestCLOBEnginePlaceCallsCreateOrder(t *testing.T) {
 	}
 
 	order := &clobtypes.Order{}
-	resp, err := engine.Place(context.Background(), PlaceRequest{Order: order})
+	resp, err := engine.Place(context.Background(), PlaceRequest{
+		Order: order,
+		Attribution: Attribution{
+			Builder: " builder-a ",
+			Funder:  " 0xabc ",
+			Source:  " PMX-Gateway ",
+		},
+	})
 	if err != nil {
 		t.Fatalf("place: %v", err)
 	}
@@ -85,6 +92,9 @@ func TestCLOBEnginePlaceCallsCreateOrder(t *testing.T) {
 	}
 	if resp.Order.ID != "ord-1" {
 		t.Fatalf("expected order id ord-1, got %q", resp.Order.ID)
+	}
+	if resp.Attribution.Builder != "builder-a" || resp.Attribution.Funder != "0xabc" || resp.Attribution.Source != "pmx-gateway" {
+		t.Fatalf("expected normalized attribution passthrough, got %+v", resp.Attribution)
 	}
 }
 
