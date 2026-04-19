@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -115,6 +116,11 @@ func signOrderWithCredsAndVerifyingContract(signer auth.Signer, apiKey *auth.API
 			order.Maker = maker
 		}
 	}
+
+	order.Taker = types.Address{}
+	order.Expiration = types.U256{Int: big.NewInt(0)}
+	order.Nonce = types.U256{Int: big.NewInt(0)}
+	order.FeeRateBps = types.Decimal(decimal.Zero)
 
 	domain := &apitypes.TypedDataDomain{
 		Name:              "Polymarket CTF Exchange",
