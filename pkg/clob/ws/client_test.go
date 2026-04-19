@@ -91,11 +91,15 @@ func TestClientReadTimeout(t *testing.T) {
 
 	wsURL := "ws" + strings.TrimPrefix(s.URL, "http")
 
-	// Set reconnect max to allow multiple reconnects
-	// We can't easily set reconnect options via NewClient without env vars,
-	// but defaults are usually fine (reconnect=true).
-
-	client, err := NewClient(wsURL, nil, nil)
+	client, err := NewClientWithConfig(wsURL, nil, nil, ClientConfig{
+		Reconnect:           true,
+		ReconnectMax:        3,
+		ReconnectDelay:      100 * time.Millisecond,
+		ReconnectMaxDelay:   300 * time.Millisecond,
+		ReconnectMultiplier: 1.5,
+		HeartbeatInterval:   0,
+		HeartbeatTimeout:    0,
+	})
 	if err != nil {
 		t.Fatalf("NewClient failed: %v", err)
 	}
@@ -114,23 +118,12 @@ func TestClientReadTimeout(t *testing.T) {
 		t.Fatal("timeout waiting for first connection")
 	}
 
-	// 2. Client should timeout (100ms) + reconnect delay (default is 2s, which is too long for this test)
-	// We need to override reconnect delay?
-	// The clientImpl reads CLOB_WS_RECONNECT_DELAY_MS from env.
-	// But it reads it in NewClient. We can't set it easily now.
-	// However, we can verify that the connection drops.
-
 	time.Sleep(200 * time.Millisecond) // Wait for timeout
-
-	// The client should have closed the connection by now.
-	// We check if it reconnects.
-	// Since default reconnect delay is 2s, we might need to wait > 2s.
-	// That's acceptable for a test.
 
 	select {
 	case <-connections:
 		// Reconnected!
-	case <-time.After(3 * time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("timeout waiting for reconnection")
 	}
 }

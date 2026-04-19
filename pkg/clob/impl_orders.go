@@ -365,14 +365,6 @@ func signOrderV1WithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobty
 	}, nil
 }
 
-func cloneOrder(order *clobtypes.Order) *clobtypes.Order {
-	if order == nil {
-		return nil
-	}
-	cpy := *order
-	return &cpy
-}
-
 func (c *clientImpl) PostOrder(ctx context.Context, req *clobtypes.SignedOrder) (clobtypes.OrderResponse, error) {
 	var resp clobtypes.OrderResponse
 	payload, err := buildOrderPayload(req)

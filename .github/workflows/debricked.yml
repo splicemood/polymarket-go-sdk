@@ -34,6 +34,7 @@ permissions:
 jobs:
   vulnerabilities-scan:
     name: Vulnerabilities scan
+    if: ${{ secrets.DEBRICKED_TOKEN != '' }}
     runs-on: ubuntu-latest
 
     steps:
