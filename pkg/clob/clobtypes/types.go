@@ -487,6 +487,9 @@ type (
 		FeeRateBps    types.Decimal `json:"fee_rate_bps"`
 		Nonce         types.U256    `json:"nonce"`
 		SignatureType *int          `json:"signature_type,omitempty"` // 0=EOA, 1=Proxy, 2=Safe
+		Timestamp     types.U256    `json:"timestamp,omitempty"`
+		Metadata      types.Hash    `json:"metadata,omitempty"`
+		Builder       types.Hash    `json:"builder,omitempty"`
 	}
 
 	PriceHistoryPoint struct {

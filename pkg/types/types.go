@@ -14,6 +14,9 @@ import (
 // Address represents an EVM address.
 type Address = common.Address
 
+// Hash represents a 32-byte EVM value (bytes32).
+type Hash = common.Hash
+
 // U256 represents a 256-bit unsigned integer using big.Int.
 type U256 struct {
 	*big.Int

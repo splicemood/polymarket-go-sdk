@@ -1,11 +1,10 @@
 package clob
 
-import "github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
-
 import (
 	"fmt"
 	"strings"
 
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
 	"github.com/splicemood/polymarket-go-sdk/v2/pkg/types"
 )
 
@@ -91,6 +90,9 @@ func orderWithSignature(order *clobtypes.SignedOrder) (map[string]interface{}, e
 		"nonce":         u256String(order.Order.Nonce),
 		"feeRateBps":    decimalString(order.Order.FeeRateBps),
 		"signatureType": sigType,
+		"timestamp":     u256String(order.Order.Timestamp),
+		"metadata":      order.Order.Metadata.Hex(),
+		"builder":       order.Order.Builder.Hex(),
 		"signature":     order.Signature,
 	}, nil
 }
