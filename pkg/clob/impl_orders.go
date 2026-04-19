@@ -34,6 +34,27 @@ func (c *clientImpl) CreateOrder(ctx context.Context, order *clobtypes.Order) (c
 }
 
 func (c *clientImpl) CreateOrderWithOptions(ctx context.Context, order *clobtypes.Order, opts *clobtypes.OrderOptions) (clobtypes.OrderResponse, error) {
+	resp, postErr := c.createOrderOnce(ctx, order, opts)
+	if postErr == nil {
+		return resp, nil
+	}
+
+	if strings.Contains(postErr.Error(), "order_version_mismatch") && c.httpClient != nil {
+		base := c.httpClient.BaseURL()
+		altBase := "https://clob-v2.polymarket.com"
+		if strings.Contains(base, "clob-v2") {
+			altBase = "https://clob.polymarket.com"
+		}
+
+		altTransport := c.httpClient.CloneWithBaseURL(altBase)
+		altClient := c.cloneWithTransport(altTransport)
+		return altClient.createOrderOnce(ctx, order, opts)
+	}
+
+	return clobtypes.OrderResponse{}, postErr
+}
+
+func (c *clientImpl) createOrderOnce(ctx context.Context, order *clobtypes.Order, opts *clobtypes.OrderOptions) (clobtypes.OrderResponse, error) {
 	signed, err := c.signOrderWithContext(ctx, order)
 	if err != nil {
 		return clobtypes.OrderResponse{}, err
@@ -43,49 +64,7 @@ func (c *clientImpl) CreateOrderWithOptions(ctx context.Context, order *clobtype
 		signed.PostOnly = opts.PostOnly
 		signed.DeferExec = opts.DeferExec
 	}
-	resp, postErr := c.PostOrder(ctx, signed)
-	if postErr == nil {
-		return resp, nil
-	}
-
-	if strings.Contains(postErr.Error(), "order_version_mismatch") {
-		attemptedV2 := strings.Contains(c.httpClient.BaseURL(), "clob-v2")
-		targetV2 := !attemptedV2
-		retryOrder := cloneOrder(order)
-
-		verifyingContract := exchangeContractV1Mainnet
-		if targetV2 {
-			verifyingContract = exchangeContractV2Mainnet
-		}
-		if retryOrder != nil && retryOrder.TokenID.Int != nil {
-			req := &clobtypes.NegRiskRequest{TokenID: retryOrder.TokenID.Int.String()}
-			nr, err := c.NegRisk(ctx, req)
-			if err == nil && nr.NegRisk {
-				if targetV2 {
-					verifyingContract = negRiskExchangeContractV2Mainnet
-				} else {
-					verifyingContract = negRiskExchangeContractV1Mainnet
-				}
-			}
-		}
-
-		if targetV2 {
-			signed, err = signOrderV2WithCreds(c.signer, c.apiKey, retryOrder, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
-		} else {
-			signed, err = signOrderV1WithCreds(c.signer, c.apiKey, retryOrder, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
-		}
-		if err != nil {
-			return clobtypes.OrderResponse{}, postErr
-		}
-		if opts != nil {
-			signed.OrderType = opts.OrderType
-			signed.PostOnly = opts.PostOnly
-			signed.DeferExec = opts.DeferExec
-		}
-		return c.PostOrder(ctx, signed)
-	}
-
-	return clobtypes.OrderResponse{}, postErr
+	return c.PostOrder(ctx, signed)
 }
 
 func (c *clientImpl) CreateOrderFromSignable(ctx context.Context, order *clobtypes.SignableOrder) (clobtypes.OrderResponse, error) {
