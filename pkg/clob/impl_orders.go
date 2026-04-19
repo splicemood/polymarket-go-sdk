@@ -67,6 +67,13 @@ func (c *clientImpl) signOrderWithContext(ctx context.Context, order *clobtypes.
 			verifyingContract = negRiskExchangeContractMainnet
 		}
 	}
+
+	if order != nil && order.FeeRateBps.IsZero() && order.TokenID.Int != nil {
+		resp, err := c.FeeRate(ctx, &clobtypes.FeeRateRequest{TokenID: order.TokenID.Int.String()})
+		if err == nil && resp.BaseFee > 0 {
+			order.FeeRateBps = types.Decimal(decimal.NewFromInt(resp.BaseFee))
+		}
+	}
 	return signOrderWithCredsAndVerifyingContract(c.signer, c.apiKey, order, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
 }
 
@@ -120,7 +127,6 @@ func signOrderWithCredsAndVerifyingContract(signer auth.Signer, apiKey *auth.API
 	order.Taker = types.Address{}
 	order.Expiration = types.U256{Int: big.NewInt(0)}
 	order.Nonce = types.U256{Int: big.NewInt(0)}
-	order.FeeRateBps = types.Decimal(decimal.Zero)
 
 	domain := &apitypes.TypedDataDomain{
 		Name:              "Polymarket CTF Exchange",
