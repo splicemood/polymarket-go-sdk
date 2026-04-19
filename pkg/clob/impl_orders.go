@@ -50,17 +50,18 @@ func (c *clientImpl) CreateOrderWithOptions(ctx context.Context, order *clobtype
 
 	if strings.Contains(postErr.Error(), "order_version_mismatch") {
 		attemptedV2 := strings.Contains(c.httpClient.BaseURL(), "clob-v2")
+		targetV2 := !attemptedV2
 		retryOrder := cloneOrder(order)
 
 		verifyingContract := exchangeContractV1Mainnet
-		if attemptedV2 {
+		if targetV2 {
 			verifyingContract = exchangeContractV2Mainnet
 		}
 		if retryOrder != nil && retryOrder.TokenID.Int != nil {
 			req := &clobtypes.NegRiskRequest{TokenID: retryOrder.TokenID.Int.String()}
 			nr, err := c.NegRisk(ctx, req)
 			if err == nil && nr.NegRisk {
-				if attemptedV2 {
+				if targetV2 {
 					verifyingContract = negRiskExchangeContractV2Mainnet
 				} else {
 					verifyingContract = negRiskExchangeContractV1Mainnet
@@ -68,10 +69,10 @@ func (c *clientImpl) CreateOrderWithOptions(ctx context.Context, order *clobtype
 			}
 		}
 
-		if attemptedV2 {
-			signed, err = signOrderV1WithCreds(c.signer, c.apiKey, retryOrder, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
-		} else {
+		if targetV2 {
 			signed, err = signOrderV2WithCreds(c.signer, c.apiKey, retryOrder, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
+		} else {
+			signed, err = signOrderV1WithCreds(c.signer, c.apiKey, retryOrder, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
 		}
 		if err != nil {
 			return clobtypes.OrderResponse{}, postErr
