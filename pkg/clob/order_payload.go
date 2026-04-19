@@ -77,7 +77,7 @@ func orderWithSignature(order *clobtypes.SignedOrder) (map[string]interface{}, e
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	payload := map[string]interface{}{
 		"salt":          salt,
 		"maker":         order.Order.Maker.Hex(),
 		"signer":        order.Order.Signer.Hex(),
@@ -90,11 +90,19 @@ func orderWithSignature(order *clobtypes.SignedOrder) (map[string]interface{}, e
 		"nonce":         u256String(order.Order.Nonce),
 		"feeRateBps":    decimalString(order.Order.FeeRateBps),
 		"signatureType": sigType,
-		"timestamp":     u256String(order.Order.Timestamp),
-		"metadata":      order.Order.Metadata.Hex(),
-		"builder":       order.Order.Builder.Hex(),
 		"signature":     order.Signature,
-	}, nil
+	}
+	if order.Order.Timestamp.Int != nil && order.Order.Timestamp.Int.Sign() > 0 {
+		payload["timestamp"] = u256String(order.Order.Timestamp)
+	}
+	if order.Order.Metadata != (types.Hash{}) {
+		payload["metadata"] = order.Order.Metadata.Hex()
+	}
+	if order.Order.Builder != (types.Hash{}) {
+		payload["builder"] = order.Order.Builder.Hex()
+	}
+
+	return payload, nil
 }
 
 func u256String(value types.U256) string {

@@ -20,8 +20,11 @@ import (
 )
 
 const (
-	exchangeContractMainnet        = "0xE111180000d2663C0091e4f400237545B87B996B"
-	negRiskExchangeContractMainnet = "0xe2222d279d744050d28e00520010520000310F59"
+	exchangeContractV1Mainnet        = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
+	negRiskExchangeContractV1Mainnet = "0xC5d563A36AE78145C45a50134d48A1215220f80a"
+
+	exchangeContractV2Mainnet        = "0xE111180000d2663C0091e4f400237545B87B996B"
+	negRiskExchangeContractV2Mainnet = "0xe2222d279d744050d28e00520010520000310F59"
 )
 
 // CreateOrder builds and signs an order, then posts it to the CLOB.
@@ -59,12 +62,20 @@ func (c *clientImpl) signOrder(order *clobtypes.Order) (*clobtypes.SignedOrder, 
 }
 
 func (c *clientImpl) signOrderWithContext(ctx context.Context, order *clobtypes.Order) (*clobtypes.SignedOrder, error) {
-	verifyingContract := exchangeContractMainnet
+	isV2 := strings.Contains(c.httpClient.BaseURL(), "clob-v2")
+	verifyingContract := exchangeContractV1Mainnet
+	if isV2 {
+		verifyingContract = exchangeContractV2Mainnet
+	}
 	if order != nil && order.TokenID.Int != nil {
 		req := &clobtypes.NegRiskRequest{TokenID: order.TokenID.Int.String()}
 		resp, err := c.NegRisk(ctx, req)
 		if err == nil && resp.NegRisk {
-			verifyingContract = negRiskExchangeContractMainnet
+			if isV2 {
+				verifyingContract = negRiskExchangeContractV2Mainnet
+			} else {
+				verifyingContract = negRiskExchangeContractV1Mainnet
+			}
 		}
 	}
 
@@ -74,19 +85,22 @@ func (c *clientImpl) signOrderWithContext(ctx context.Context, order *clobtypes.
 			order.FeeRateBps = types.Decimal(decimal.NewFromInt(resp.BaseFee))
 		}
 	}
-	return signOrderWithCredsAndVerifyingContract(c.signer, c.apiKey, order, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
+	if isV2 {
+		return signOrderV2WithCreds(c.signer, c.apiKey, order, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
+	}
+	return signOrderV1WithCreds(c.signer, c.apiKey, order, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
 }
 
 // SignOrder builds an EIP-712 signature for the given order without posting it.
 func SignOrder(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order) (*clobtypes.SignedOrder, error) {
-	return signOrderWithCredsAndVerifyingContract(signer, apiKey, order, nil, nil, nil, exchangeContractMainnet)
+	return signOrderV2WithCreds(signer, apiKey, order, nil, nil, nil, exchangeContractV2Mainnet)
 }
 
 func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order, sigType *auth.SignatureType, funder *types.Address, saltGen SaltGenerator) (*clobtypes.SignedOrder, error) {
-	return signOrderWithCredsAndVerifyingContract(signer, apiKey, order, sigType, funder, saltGen, exchangeContractMainnet)
+	return signOrderV2WithCreds(signer, apiKey, order, sigType, funder, saltGen, exchangeContractV2Mainnet)
 }
 
-func signOrderWithCredsAndVerifyingContract(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order, sigType *auth.SignatureType, funder *types.Address, saltGen SaltGenerator, verifyingContract string) (*clobtypes.SignedOrder, error) {
+func signOrderV2WithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order, sigType *auth.SignatureType, funder *types.Address, saltGen SaltGenerator, verifyingContract string) (*clobtypes.SignedOrder, error) {
 	if signer == nil {
 		return nil, auth.ErrMissingSigner
 	}
@@ -192,6 +206,125 @@ func signOrderWithCredsAndVerifyingContract(signer auth.Signer, apiKey *auth.API
 		"timestamp":     (*math.HexOrDecimal256)(order.Timestamp.Int),
 		"metadata":      order.Metadata.Hex(),
 		"builder":       order.Builder.Hex(),
+	}
+
+	sig, err := signer.SignTypedData(domain, typesDef, message, "Order")
+	if err != nil {
+		return nil, fmt.Errorf("signing failed: %w", err)
+	}
+
+	owner := apiKey.Key
+	if owner == "" {
+		owner = signer.Address().String()
+	}
+
+	return &clobtypes.SignedOrder{
+		Order:     *order,
+		Signature: hexutil.Encode(sig),
+		Owner:     owner,
+	}, nil
+}
+
+func signOrderV1WithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order, sigType *auth.SignatureType, funder *types.Address, saltGen SaltGenerator, verifyingContract string) (*clobtypes.SignedOrder, error) {
+	if signer == nil {
+		return nil, auth.ErrMissingSigner
+	}
+	if apiKey == nil {
+		return nil, auth.ErrMissingCreds
+	}
+	if order == nil {
+		return nil, fmt.Errorf("order is required")
+	}
+
+	sigTypeVal := int(auth.SignatureEOA)
+	if order.SignatureType != nil {
+		sigTypeVal = *order.SignatureType
+	} else if sigType != nil {
+		sigTypeVal = int(*sigType)
+		val := sigTypeVal
+		order.SignatureType = &val
+	}
+
+	if order.Maker == (types.Address{}) {
+		if funder != nil {
+			if sigTypeVal == int(auth.SignatureEOA) {
+				return nil, fmt.Errorf("funder requires non-EOA signature type")
+			}
+			if *funder == (types.Address{}) {
+				return nil, fmt.Errorf("funder cannot be zero address")
+			}
+			order.Maker = *funder
+		} else {
+			maker, err := deriveMakerFromSignature(signer, sigTypeVal)
+			if err != nil {
+				return nil, err
+			}
+			order.Maker = maker
+		}
+	}
+
+	domain := &apitypes.TypedDataDomain{
+		Name:              "Polymarket CTF Exchange",
+		Version:           "1",
+		ChainId:           (*math.HexOrDecimal256)(signer.ChainID()),
+		VerifyingContract: verifyingContract,
+	}
+
+	typesDef := apitypes.Types{
+		"EIP712Domain": {
+			{Name: "name", Type: "string"},
+			{Name: "version", Type: "string"},
+			{Name: "chainId", Type: "uint256"},
+			{Name: "verifyingContract", Type: "address"},
+		},
+		"Order": {
+			{Name: "salt", Type: "uint256"},
+			{Name: "maker", Type: "address"},
+			{Name: "signer", Type: "address"},
+			{Name: "taker", Type: "address"},
+			{Name: "tokenId", Type: "uint256"},
+			{Name: "makerAmount", Type: "uint256"},
+			{Name: "takerAmount", Type: "uint256"},
+			{Name: "expiration", Type: "uint256"},
+			{Name: "nonce", Type: "uint256"},
+			{Name: "feeRateBps", Type: "uint256"},
+			{Name: "side", Type: "uint8"},
+			{Name: "signatureType", Type: "uint8"},
+		},
+	}
+
+	sideInt := 0
+	if strings.ToUpper(order.Side) == "SELL" {
+		sideInt = 1
+	}
+
+	if order.Salt.Int == nil || order.Salt.Int.Sign() == 0 {
+		var salt *big.Int
+		var err error
+		if saltGen != nil {
+			salt, err = saltGen()
+		} else {
+			salt, err = generateSalt()
+		}
+		if err != nil {
+			return nil, err
+		}
+		order.Salt = types.U256{Int: salt}
+	}
+
+	message := apitypes.TypedDataMessage{
+		"salt":          (*math.HexOrDecimal256)(order.Salt.Int),
+		"maker":         order.Maker.String(),
+		"signer":        signer.Address().String(),
+		"taker":         order.Taker.String(),
+		"tokenId":       (*math.HexOrDecimal256)(order.TokenID.Int),
+		"makerAmount":   (*math.HexOrDecimal256)(order.MakerAmount.BigInt()),
+		"takerAmount":   (*math.HexOrDecimal256)(order.TakerAmount.BigInt()),
+		"expiration":    (*math.HexOrDecimal256)(order.Expiration.Int),
+		"nonce":         (*math.HexOrDecimal256)(order.Nonce.Int),
+		"feeRateBps":    (*math.HexOrDecimal256)(order.FeeRateBps.BigInt()),
+		"side":          (*math.HexOrDecimal256)(big.NewInt(int64(sideInt))),
+		"signatureType": (*math.HexOrDecimal256)(big.NewInt(int64(sigTypeVal))),
 	}
 
 	sig, err := signer.SignTypedData(domain, typesDef, message, "Order")

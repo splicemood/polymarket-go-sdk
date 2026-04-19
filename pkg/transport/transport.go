@@ -49,6 +49,13 @@ type Client struct {
 	circuitBreaker *CircuitBreaker
 }
 
+func (c *Client) BaseURL() string {
+	if c == nil {
+		return ""
+	}
+	return c.baseURL
+}
+
 // NewClient creates a new transport client.
 // If httpClient is nil, a timeout-bounded default client will be used.
 func NewClient(httpClient Doer, baseURL string) *Client {
