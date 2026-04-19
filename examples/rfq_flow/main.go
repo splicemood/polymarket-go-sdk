@@ -1,19 +1,19 @@
 package main
 
 import (
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
 	"context"
 	"fmt"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 
-	polymarket "github.com/GoPolymarket/polymarket-go-sdk"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/auth"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob"
-	
-"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/rfq"
+	polymarket "github.com/splicemood/polymarket-go-sdk/v2"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/auth"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob"
+
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/rfq"
 )
 
 func main() {

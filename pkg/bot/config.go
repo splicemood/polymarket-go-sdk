@@ -12,20 +12,20 @@ import (
 
 // Config controls scanning, risk, and execution behavior.
 type Config struct {
-	ScanLimit             int
-	TopN                  int
-	MinSpreadBps          decimal.Decimal
-	MinBookDepthShares    decimal.Decimal
-	MinImbalance          decimal.Decimal
-	DefaultAmountUSDC     decimal.Decimal
-	MaxPerTradeUSDC       decimal.Decimal
-	MaxDailyLossUSDC      decimal.Decimal
-	MaxOpenTrades         int
-	MaxSlippageBps        decimal.Decimal
-	MinConfidenceBps      decimal.Decimal
-	RequestTimeout        time.Duration
-	DryRun                bool
-	AllowExecution        bool
+	ScanLimit              int
+	TopN                   int
+	MinSpreadBps           decimal.Decimal
+	MinBookDepthShares     decimal.Decimal
+	MinImbalance           decimal.Decimal
+	DefaultAmountUSDC      decimal.Decimal
+	MaxPerTradeUSDC        decimal.Decimal
+	MaxDailyLossUSDC       decimal.Decimal
+	MaxOpenTrades          int
+	MaxSlippageBps         decimal.Decimal
+	MinConfidenceBps       decimal.Decimal
+	RequestTimeout         time.Duration
+	DryRun                 bool
+	AllowExecution         bool
 	RequireExplicitConfirm bool
 }
 

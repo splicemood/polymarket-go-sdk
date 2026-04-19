@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
 	"github.com/shopspring/decimal"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
 )
 
 // RiskSnapshot tracks live constraints before an order can be sent.

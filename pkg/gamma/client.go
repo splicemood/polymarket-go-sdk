@@ -23,7 +23,7 @@ type Client interface {
 	Sports(ctx context.Context) ([]SportsMetadata, error)
 	// SportsMarketTypes lists the types of prediction markets available for sports.
 	SportsMarketTypes(ctx context.Context) (SportsMarketTypesResponse, error)
-	
+
 	// -- Tags --
 
 	// Tags retrieves a list of market tags (categories).
@@ -40,7 +40,7 @@ type Client interface {
 	TagsRelatedToTagByID(ctx context.Context, req *RelatedTagsByIDRequest) ([]Tag, error)
 	// TagsRelatedToTagBySlug retrieves full tag objects related to a specific tag slug.
 	TagsRelatedToTagBySlug(ctx context.Context, req *RelatedTagsBySlugRequest) ([]Tag, error)
-	
+
 	// -- Events --
 
 	// Events retrieves a list of prediction events (groups of markets).
@@ -53,7 +53,7 @@ type Client interface {
 	EventBySlug(ctx context.Context, req *EventBySlugRequest) (*Event, error)
 	// EventTags lists tags associated with a specific event.
 	EventTags(ctx context.Context, req *EventTagsRequest) ([]Tag, error)
-	
+
 	// -- Markets --
 
 	// Markets retrieves a list of specific prediction markets.
@@ -66,7 +66,7 @@ type Client interface {
 	MarketBySlug(ctx context.Context, req *MarketBySlugRequest) (*Market, error)
 	// MarketTags lists tags associated with a specific market.
 	MarketTags(ctx context.Context, req *MarketTagsRequest) ([]Tag, error)
-	
+
 	// -- Series & Collections --
 
 	// Series retrieves a list of market series (related groups of events).

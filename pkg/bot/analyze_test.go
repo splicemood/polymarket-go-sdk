@@ -3,8 +3,8 @@ package bot
 import (
 	"testing"
 
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
 	"github.com/shopspring/decimal"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
 )
 
 func TestTopOfBook(t *testing.T) {

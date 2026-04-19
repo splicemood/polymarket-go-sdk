@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
 	"github.com/shopspring/decimal"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
 )
 
 func (e *Engine) analyzeToken(ctx context.Context, m clobtypes.Market, t clobtypes.MarketToken) (Opportunity, error) {

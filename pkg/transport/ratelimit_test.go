@@ -10,10 +10,10 @@ import (
 
 func TestNewRateLimiter(t *testing.T) {
 	tests := []struct {
-		name               string
-		requestsPerSecond  int
-		expectedCapacity   int
-		expectedAvailable  int
+		name              string
+		requestsPerSecond int
+		expectedCapacity  int
+		expectedAvailable int
 	}{
 		{
 			name:              "valid rate",

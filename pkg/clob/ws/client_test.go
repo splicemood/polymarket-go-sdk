@@ -115,18 +115,18 @@ func TestClientReadTimeout(t *testing.T) {
 	}
 
 	// 2. Client should timeout (100ms) + reconnect delay (default is 2s, which is too long for this test)
-	// We need to override reconnect delay? 
+	// We need to override reconnect delay?
 	// The clientImpl reads CLOB_WS_RECONNECT_DELAY_MS from env.
 	// But it reads it in NewClient. We can't set it easily now.
 	// However, we can verify that the connection drops.
-	
+
 	time.Sleep(200 * time.Millisecond) // Wait for timeout
 
 	// The client should have closed the connection by now.
 	// We check if it reconnects.
 	// Since default reconnect delay is 2s, we might need to wait > 2s.
 	// That's acceptable for a test.
-	
+
 	select {
 	case <-connections:
 		// Reconnected!

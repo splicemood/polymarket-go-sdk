@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/auth"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/auth"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
 )
 
 func (c *clientImpl) BalanceAllowance(ctx context.Context, req *clobtypes.BalanceAllowanceRequest) (clobtypes.BalanceAllowanceResponse, error) {

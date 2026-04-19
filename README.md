@@ -1,7 +1,7 @@
 # Polymarket Go SDK
 
-[![Go CI](https://github.com/GoPolymarket/polymarket-go-sdk/actions/workflows/go.yml/badge.svg)](https://github.com/GoPolymarket/polymarket-go-sdk/actions)
-[![Go Reference](https://pkg.go.dev/badge/github.com/GoPolymarket/polymarket-go-sdk.svg)](https://pkg.go.dev/github.com/GoPolymarket/polymarket-go-sdk)
+[![Go CI](https://github.com/splicemood/polymarket-go-sdk/actions/workflows/go.yml/badge.svg)](https://github.com/splicemood/polymarket-go-sdk/actions)
+[![Go Reference](https://pkg.go.dev/badge/github.com/splicemood/polymarket-go-sdk/v2.svg)](https://pkg.go.dev/github.com/splicemood/polymarket-go-sdk/v2)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **Official docs alignment:** Implements Polymarket Order Attribution (builder auth headers for leaderboard/grants) and follows the Builder Authentication/Remote Signing guidance referenced by the Relayer Client docs; official docs: [Order Attribution](https://docs.polymarket.com/developers/builders/order-attribution), [Relayer Client](https://docs.polymarket.com/developers/builders/relayer-client).
@@ -67,7 +67,7 @@ graph TD
 ## 🚀 Installation
 
 ```bash
-go get github.com/GoPolymarket/polymarket-go-sdk
+go get github.com/splicemood/polymarket-go-sdk/v2
 ```
 
 ## 🛠 Quick Start
@@ -84,12 +84,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/GoPolymarket/polymarket-go-sdk"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/auth"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/ws"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/rtds"
+	"github.com/splicemood/polymarket-go-sdk/v2"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/auth"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/ws"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/rtds"
 )
 
 func main() {
@@ -289,7 +289,7 @@ The SDK provides typed errors in `pkg/errors` to help you handle trading failure
 ```go
 import (
     "errors"
-    sdkerrors "github.com/GoPolymarket/polymarket-go-sdk/pkg/errors"
+    sdkerrors "github.com/splicemood/polymarket-go-sdk/v2/pkg/errors"
 )
 
 resp, err := client.CLOB.CreateOrder(ctx, order)
@@ -373,4 +373,4 @@ Distributed under the Apache License 2.0. See `LICENSE` for more information.
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=GoPolymarket/polymarket-go-sdk&type=Date)](https://www.star-history.com/#GoPolymarket/polymarket-go-sdk&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=splicemood/polymarket-go-sdk&type=Date)](https://www.star-history.com/#splicemood/polymarket-go-sdk&Date)

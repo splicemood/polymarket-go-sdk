@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/types"
 )
 
 // OrderType represents time-in-force / order type values.

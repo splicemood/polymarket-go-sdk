@@ -8,13 +8,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/auth"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/auth"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/types"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+)
+
+const (
+	exchangeContractMainnet        = "0xE111180000d2663C0091e4f400237545B87B996B"
+	negRiskExchangeContractMainnet = "0xe2222d279d744050d28e00520010520000310F59"
 )
 
 // CreateOrder builds and signs an order, then posts it to the CLOB.
@@ -24,7 +29,7 @@ func (c *clientImpl) CreateOrder(ctx context.Context, order *clobtypes.Order) (c
 }
 
 func (c *clientImpl) CreateOrderWithOptions(ctx context.Context, order *clobtypes.Order, opts *clobtypes.OrderOptions) (clobtypes.OrderResponse, error) {
-	signed, err := c.signOrder(order)
+	signed, err := c.signOrderWithContext(ctx, order)
 	if err != nil {
 		return clobtypes.OrderResponse{}, err
 	}
@@ -51,12 +56,28 @@ func (c *clientImpl) signOrder(order *clobtypes.Order) (*clobtypes.SignedOrder, 
 	return signOrderWithCreds(c.signer, c.apiKey, order, &c.signatureType, c.funder, c.saltGenerator)
 }
 
+func (c *clientImpl) signOrderWithContext(ctx context.Context, order *clobtypes.Order) (*clobtypes.SignedOrder, error) {
+	verifyingContract := exchangeContractMainnet
+	if order != nil && order.TokenID.Int != nil {
+		req := &clobtypes.NegRiskRequest{TokenID: order.TokenID.Int.String()}
+		resp, err := c.NegRisk(ctx, req)
+		if err == nil && resp.NegRisk {
+			verifyingContract = negRiskExchangeContractMainnet
+		}
+	}
+	return signOrderWithCredsAndVerifyingContract(c.signer, c.apiKey, order, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
+}
+
 // SignOrder builds an EIP-712 signature for the given order without posting it.
 func SignOrder(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order) (*clobtypes.SignedOrder, error) {
-	return signOrderWithCreds(signer, apiKey, order, nil, nil, nil)
+	return signOrderWithCredsAndVerifyingContract(signer, apiKey, order, nil, nil, nil, exchangeContractMainnet)
 }
 
 func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order, sigType *auth.SignatureType, funder *types.Address, saltGen SaltGenerator) (*clobtypes.SignedOrder, error) {
+	return signOrderWithCredsAndVerifyingContract(signer, apiKey, order, sigType, funder, saltGen, exchangeContractMainnet)
+}
+
+func signOrderWithCredsAndVerifyingContract(signer auth.Signer, apiKey *auth.APIKey, order *clobtypes.Order, sigType *auth.SignatureType, funder *types.Address, saltGen SaltGenerator, verifyingContract string) (*clobtypes.SignedOrder, error) {
 	if signer == nil {
 		return nil, auth.ErrMissingSigner
 	}
@@ -98,7 +119,7 @@ func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtype
 		Name:              "Polymarket CTF Exchange",
 		Version:           "1",
 		ChainId:           (*math.HexOrDecimal256)(signer.ChainID()),
-		VerifyingContract: "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E", // Exchange Contract Address (Mainnet)
+		VerifyingContract: verifyingContract,
 	}
 
 	typesDef := apitypes.Types{

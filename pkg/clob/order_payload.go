@@ -1,12 +1,12 @@
 package clob
 
-import "github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/clobtypes"
+import "github.com/splicemood/polymarket-go-sdk/v2/pkg/clob/clobtypes"
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
+	"github.com/splicemood/polymarket-go-sdk/v2/pkg/types"
 )
 
 func buildOrderPayload(order *clobtypes.SignedOrder) (map[string]interface{}, error) {
