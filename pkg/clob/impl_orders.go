@@ -43,7 +43,48 @@ func (c *clientImpl) CreateOrderWithOptions(ctx context.Context, order *clobtype
 		signed.PostOnly = opts.PostOnly
 		signed.DeferExec = opts.DeferExec
 	}
-	return c.PostOrder(ctx, signed)
+	resp, postErr := c.PostOrder(ctx, signed)
+	if postErr == nil {
+		return resp, nil
+	}
+
+	if strings.Contains(postErr.Error(), "order_version_mismatch") {
+		attemptedV2 := strings.Contains(c.httpClient.BaseURL(), "clob-v2")
+		retryOrder := cloneOrder(order)
+
+		verifyingContract := exchangeContractV1Mainnet
+		if attemptedV2 {
+			verifyingContract = exchangeContractV2Mainnet
+		}
+		if retryOrder != nil && retryOrder.TokenID.Int != nil {
+			req := &clobtypes.NegRiskRequest{TokenID: retryOrder.TokenID.Int.String()}
+			nr, err := c.NegRisk(ctx, req)
+			if err == nil && nr.NegRisk {
+				if attemptedV2 {
+					verifyingContract = negRiskExchangeContractV2Mainnet
+				} else {
+					verifyingContract = negRiskExchangeContractV1Mainnet
+				}
+			}
+		}
+
+		if attemptedV2 {
+			signed, err = signOrderV1WithCreds(c.signer, c.apiKey, retryOrder, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
+		} else {
+			signed, err = signOrderV2WithCreds(c.signer, c.apiKey, retryOrder, &c.signatureType, c.funder, c.saltGenerator, verifyingContract)
+		}
+		if err != nil {
+			return clobtypes.OrderResponse{}, postErr
+		}
+		if opts != nil {
+			signed.OrderType = opts.OrderType
+			signed.PostOnly = opts.PostOnly
+			signed.DeferExec = opts.DeferExec
+		}
+		return c.PostOrder(ctx, signed)
+	}
+
+	return clobtypes.OrderResponse{}, postErr
 }
 
 func (c *clientImpl) CreateOrderFromSignable(ctx context.Context, order *clobtypes.SignableOrder) (clobtypes.OrderResponse, error) {
@@ -342,6 +383,14 @@ func signOrderV1WithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobty
 		Signature: hexutil.Encode(sig),
 		Owner:     owner,
 	}, nil
+}
+
+func cloneOrder(order *clobtypes.Order) *clobtypes.Order {
+	if order == nil {
+		return nil
+	}
+	cpy := *order
+	return &cpy
 }
 
 func (c *clientImpl) PostOrder(ctx context.Context, req *clobtypes.SignedOrder) (clobtypes.OrderResponse, error) {
